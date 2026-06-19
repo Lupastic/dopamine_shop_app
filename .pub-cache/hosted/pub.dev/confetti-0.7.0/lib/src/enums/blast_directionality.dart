@@ -1,4 +1,0 @@
-enum BlastDirectionality {
-  directional,
-  explosive,
-}
