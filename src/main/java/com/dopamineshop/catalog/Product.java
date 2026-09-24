@@ -24,6 +24,10 @@ public class Product {
     @GeneratedValue
     private UUID id;
 
+    // 🔑 Для синхронизации с DummyJSON
+    @Column(name = "external_id", unique = true)
+    private Integer externalId;
+
     @Column(nullable = false)
     private String title;
 

@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.function.Function;
 
 @Service
 public class JwtService {
@@ -50,24 +49,30 @@ public class JwtService {
     }
 
     public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+        return extractAllClaims(token).getSubject();
     }
 
-    public boolean isTokenValid(String token, UserDetails user) {
-        String username = extractUsername(token);
-        return username.equals(user.getUsername()) && !isTokenExpired(token);
+    public boolean isAccessTokenValid(String token, UserDetails user) {
+        return isTokenValid(token, user, "access");
     }
 
-    private boolean isTokenExpired(String token) {
-        return extractClaim(token, Claims::getExpiration).before(new Date());
+    public boolean isRefreshTokenValid(String token, UserDetails user) {
+        return isTokenValid(token, user, "refresh");
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> resolver) {
-        Claims claims = Jwts.parser()
+    private boolean isTokenValid(String token, UserDetails user, String expectedType) {
+        Claims claims = extractAllClaims(token);
+        return user.getUsername().equals(claims.getSubject())
+                && expectedType.equals(claims.get("type", String.class))
+                && claims.getExpiration() != null
+                && claims.getExpiration().after(new Date());
+    }
+
+    private Claims extractAllClaims(String token) {
+        return Jwts.parser()
                 .verifyWith(signingKey)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-        return resolver.apply(claims);
     }
 }

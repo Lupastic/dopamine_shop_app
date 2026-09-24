@@ -5,6 +5,7 @@ import com.dopamineshop.common.exception.ApiException;
 import com.dopamineshop.config.JwtService;
 import com.dopamineshop.user.User;
 import com.dopamineshop.user.UserRepository;
+import io.jsonwebtoken.JwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -51,16 +52,19 @@ public class AuthService {
     }
 
     public AuthResponse refresh(RefreshRequest request) {
-        String email = jwtService.extractUsername(request.refreshToken());
+        try {
+            String email = jwtService.extractUsername(request.refreshToken());
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Невалидный токен"));
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Невалидный токен"));
+            if (!jwtService.isRefreshTokenValid(request.refreshToken(), user)) {
+                throw new ApiException(HttpStatus.UNAUTHORIZED, "Refresh-токен истёк или недействителен");
+            }
 
-        if (!jwtService.isTokenValid(request.refreshToken(), user)) {
+            return buildAuthResponse(user);
+        } catch (JwtException | IllegalArgumentException ex) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Refresh-токен истёк или недействителен");
         }
-
-        return buildAuthResponse(user);
     }
 
     private AuthResponse buildAuthResponse(User user) {

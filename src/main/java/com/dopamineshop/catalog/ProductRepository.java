@@ -7,9 +7,14 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface ProductRepository extends JpaRepository<Product, UUID> {
+
+    // 🔑 Для сидера
+    boolean existsByExternalId(Integer externalId);
+    Optional<Product> findByExternalId(Integer externalId);
 
     /**
      * Keyset-пагинация ленты товаров по (createdAt, id) desc — стабильна

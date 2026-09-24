@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: dopamine-shop-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dopamine_shop
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - dopamine_shop_pgdata:/var/lib/postgresql/data
+
+volumes:
+  dopamine_shop_pgdata:
